@@ -79,8 +79,23 @@ flutter test      # 81 tests
 The tests run against the real bundled database through `sqflite_common_ffi`,
 so the schema, seed data and SQL are exercised directly rather than mocked.
 
+## Web preview
+
+The app also runs in a browser for quick visual review (the shipped targets are
+still Android/iOS). `sqflite` has no web implementation, so
+`lib/core/database/platform/` swaps in `sqflite_common_ffi_web` on web; the same
+bundled `assets/sunnah.db` is seeded into the wasm file system, so the preview is
+just as offline as the device build.
+
+```bash
+flutter build web --release
+(cd build/web && python3 -m http.server 8080)
+```
+
+Mobile-viewport screenshots (412×915) of the running app are in `screenshots/`.
+
 ## Verification status
 
 - `flutter analyze` — no issues.
 - `flutter test` — 81 tests passing.
-- `flutter build web --release` — full app compiles in AOT.
+- `flutter build web --release` — full app compiles in AOT and boots in a browser.

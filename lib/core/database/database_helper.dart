@@ -1,16 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
-import '../constants/app_constants.dart';
 import '../models/book.dart';
 import '../models/chapter.dart';
 import '../models/hadith.dart';
 import '../utils/arabic_normalizer.dart';
 import 'hadith_query.dart';
+import 'platform/database_bootstrap.dart';
 
 /// Owns the bundled offline SQLite database.
 ///
@@ -58,35 +55,10 @@ class DatabaseHelper {
   }
 
   Future<Database> _open() async {
-    final factory = _factory ?? databaseFactory;
-    final path = _overridePath ?? await _resolveDatabasePath();
-    final readOnly = _overridePath != null;
-    return factory.openDatabase(
-      path,
-      options: OpenDatabaseOptions(
-        readOnly: readOnly,
-        // A version would make sqflite write `PRAGMA user_version`, which the
-        // read-only asset connection cannot do. The bundled schema is already
-        // final, so no migration hooks are needed.
-        version: readOnly ? null : AppConstants.databaseVersion,
-        onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
-      ),
+    return openAppDatabase(
+      overrideFactory: _factory,
+      overridePath: _overridePath,
     );
-  }
-
-  /// Copies the bundled asset to the databases directory when absent.
-  Future<String> _resolveDatabasePath() async {
-    final dir = await getDatabasesPath();
-    final target = p.join(dir, AppConstants.databaseFileName);
-    if (!await File(target).exists()) {
-      await Directory(dir).create(recursive: true);
-      final bytes = await rootBundle.load(AppConstants.databaseAsset);
-      await File(target).writeAsBytes(
-        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
-        flush: true,
-      );
-    }
-    return target;
   }
 
   /// All collections, ordered for display.
